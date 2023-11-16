@@ -1,11 +1,12 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { withAxiomRouteHandler } from "next-axiom";
 import { type NextRequest } from "next/server";
 
 import { env } from "~/env.mjs";
 import { appRouter } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 
-const handler = (req: NextRequest) =>
+const handler = withAxiomRouteHandler((req: NextRequest) =>
   fetchRequestHandler({
     endpoint: "/api/trpc",
     req,
@@ -19,6 +20,7 @@ const handler = (req: NextRequest) =>
             );
           }
         : undefined,
-  });
+  })
+);
 
 export { handler as GET, handler as POST };

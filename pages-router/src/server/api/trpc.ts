@@ -11,6 +11,10 @@ import { initTRPC } from "@trpc/server";
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import {
+  nextAxiomTRPCMiddleware,
+  type NextAxiomTRPCMiddlewareCtx,
+} from "./axiom-trpc";
 
 /**
  * 1. CONTEXT
@@ -42,8 +46,12 @@ const createInnerTRPCContext = (_opts: CreateContextOptions) => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = (_opts: CreateNextContextOptions) => {
-  return createInnerTRPCContext({});
+export const createTRPCContext = (opts: CreateNextContextOptions) => {
+  return {
+    req: opts.req,
+    axiomTRPCMeta: { foo: "bar", randomNumber: Math.random() },
+    ...createInnerTRPCContext({}),
+  } satisfies NextAxiomTRPCMiddlewareCtx;
 };
 
 /**
@@ -83,10 +91,15 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
 export const createTRPCRouter = t.router;
 
 /**
+ * Create a procedure with the axiomTRPCMiddleware already applied to extend other procedures from.
+ */
+const baseProcedure = t.procedure.use(nextAxiomTRPCMiddleware);
+
+/**
  * Public (unauthenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = baseProcedure;
